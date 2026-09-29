@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工装夹具借用与寿命记录系统 · 鸿鹄精密一厂</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<aside>
+  <div class="brand">
+    <div class="mark"></div>
+    <h1>工装夹具<br>借用与寿命记录</h1>
+    <div class="sub">HONGHU FIXTURE OS</div>
+  </div>
+  <nav id="nav">
+    <button data-page="ledger" class="active"><span class="ico">▦</span> 夹具台账</button>
+    <button data-page="queue"><span class="ico">▤</span> 申请队列</button>
+    <button data-page="match"><span class="ico">⌖</span> 工位匹配</button>
+    <button data-page="scan"><span class="ico">⊞</span> 借还扫码</button>
+    <button data-page="maint"><span class="ico">⚙</span> 保养计划</button>
+    <button data-page="scrap"><span class="ico">⚑</span> 报废审批</button>
+    <button data-page="transfer"><span class="ico">⇄</span> 跨线调拨</button>
+    <button data-page="repair"><span class="ico">🛠</span> 维修记录</button>
+    <button data-page="disposal"><span class="ico">❡</span> 处置单</button>
+  </nav>
+  <div class="actor-box">
+    <label>当前操作人（切换模拟身份）</label>
+    <select id="actor"></select>
+  </div>
+  <div class="side-foot">鸿鹄精密一厂 · 虚构数据<br>SQLite + 本地点检照片</div>
+</aside>
+
+<main>
+  <div class="reminders" id="reminders">
+    <div><b style="color:var(--yellow)">提醒</b><ul id="reminder-list"></ul></div>
+    <button onclick="App.dismissReminders()">全部已知悉</button>
+  </div>
+  <div id="page"></div>
+</main>
+
+<div class="toast" id="toast"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>

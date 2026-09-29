@@ -13,3 +13,10 @@ build/
 轨迹/
 录屏/
 视频/
+
+# 运行期数据（首启自动生成）
+data/factory.db
+data/factory.db-shm
+data/factory.db-wal
+data/photos/*
+!data/photos/.gitkeep
