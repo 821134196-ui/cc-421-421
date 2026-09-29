@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>海川重工 · 工装夹具借用与寿命记录系统</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 32 32" width="26" height="26">
+        <polygon points="16,3 28,10 28,22 16,29 4,22 4,10" fill="none" stroke="currentColor" stroke-width="2"/>
+        <path d="M11 21 L21 11 M11 11 L21 21" stroke="currentColor" stroke-width="2"/>
+      </svg>
+    </div>
+    <div>
+      <h1>工装夹具借用与寿命记录系统</h1>
+      <div class="sub">海川重工 · 第三智造中心 <span class="dim">（演示数据均为虚构）</span></div>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button data-view="ledger" class="active">夹具台账</button>
+    <button data-view="match">工位匹配</button>
+    <button data-view="queue">申请队列</button>
+    <button data-view="scan">借还扫码</button>
+    <button data-view="maint">保养计划</button>
+    <button data-view="scrap">报废审批</button>
+  </nav>
+</header>
+
+<div id="reminder-bar" class="reminder-bar hidden"></div>
+
+<main class="content">
+
+  <!-- ============================== 夹具台账 ============================== -->
+  <section id="view-ledger" class="view">
+    <div class="toolbar">
+      <h2>夹具台账</h2>
+      <div class="filters">
+        <select id="ledger-line"><option value="">全部产线</option></select>
+        <select id="ledger-status">
+          <option value="">全部状态</option>
+          <option value="available">可用</option>
+          <option value="locked">已领用</option>
+          <option value="inspecting">待点检</option>
+          <option value="repairing">维修中</option>
+          <option value="pending_scrap">待报废</option>
+          <option value="scrapped">已报废</option>
+        </select>
+        <button class="btn" id="ledger-refresh">刷新</button>
+      </div>
+    </div>
+    <div class="grid ledger-grid" id="ledger-grid"></div>
+  </section>
+
+  <!-- ============================== 工位匹配 ============================== -->
+  <section id="view-match" class="view hidden">
+    <div class="toolbar"><h2>工位匹配校验</h2></div>
+    <div class="panel">
+      <div class="form-row">
+        <label>工位
+          <select id="match-station"></select>
+        </label>
+        <label>机型
+          <select id="match-model"></select>
+        </label>
+        <button class="btn btn-primary" id="match-go">校验并匹配</button>
+      </div>
+      <p class="hint">申请必须同时匹配工位允许机型与夹具适配机型；维修中/报废中的夹具不会出现。</p>
+      <div id="match-result"></div>
+      <div id="crossline-result" class="crossline"></div>
+    </div>
+  </section>
+
+  <!-- ============================== 申请队列 ============================== -->
+  <section id="view-queue" class="view hidden">
+    <div class="toolbar">
+      <h2>借用申请队列</h2>
+      <button class="btn btn-primary" id="queue-refresh">刷新</button>
+    </div>
+    <div class="panel">
+      <h3>新建借用申请</h3>
+      <div class="form-row">
+        <label>申请人<select id="apply-applicant"></select></label>
+        <label>工位<select id="apply-station"></select></label>
+        <label>机型<select id="apply-model"></select></label>
+        <label class="grow">备注<input id="apply-note" placeholder="班次 / 用途"></label>
+      </div>
+      <div class="form-row">
+        <label class="grow">指定夹具（可选；选其他产线夹具将生成跨线调拨处置单）
+          <select id="apply-fixture"><option value="">不指定，按工位匹配</option></select>
+        </label>
+        <button class="btn btn-primary" id="apply-submit">提交申请</button>
+      </div>
+      <div id="apply-msg" class="msg"></div>
+    </div>
+    <div id="queue-list" class="card-list"></div>
+  </section>
+
+  <!-- ============================== 借还扫码 ============================== -->
+  <section id="view-scan" class="view hidden">
+    <div class="toolbar">
+      <h2>借还扫码台</h2>
+      <button class="btn" id="scan-refresh">刷新</button>
+    </div>
+    <div class="scan-console panel">
+      <div class="scan-head">
+        <span class="scan-label">领用 LOCK</span>
+        <span class="dim">输入申请单号 / 夹具编号 / 操作员工号，锁定后他人无法再领</span>
+      </div>
+      <div class="form-row big">
+        <input id="co-request" placeholder="申请单号 BR-…（或队列中的序号）">
+        <input id="co-fixture" placeholder="夹具编号 FZ-…">
+        <input id="co-operator" placeholder="操作员工号 OP-…" value="OP-101">
+        <button class="btn btn-primary btn-strong" id="co-go">确认领用</button>
+      </div>
+      <div id="co-msg" class="msg"></div>
+    </div>
+
+    <h3 class="section-title">在借夹具 · 归还后先点检</h3>
+    <div id="active-borrows" class="card-list"></div>
+
+    <div id="inspect-dock" class="panel inspect-dock hidden">
+      <h3>归还点检 <span id="inspect-target" class="chip"></span></h3>
+      <div class="form-row">
+        <label>点检员
+          <select id="in-inspector"></select>
+        </label>
+        <label>结果
+          <select id="in-result">
+            <option value="pass">合格 → 累计寿命</option>
+            <option value="fail">不合格 → 冻结 + 维修单</option>
+          </select>
+        </label>
+        <label id="defect-wrap">缺陷类型
+          <select id="in-defect">
+            <option value="deformation">夹具变形</option>
+            <option value="missing_pin">定位销缺失</option>
+          </select>
+        </label>
+      </div>
+      <div class="form-row">
+        <label class="grow">点检照片（存入本地 photos 目录）
+          <input type="file" id="in-photo" accept="image/*">
+        </label>
+        <label class="grow">说明<input id="in-note" placeholder="点检备注"></label>
+      </div>
+      <button class="btn btn-primary" id="in-submit">提交点检</button>
+      <div id="in-msg" class="msg"></div>
+    </div>
+
+    <h3 class="section-title">维修复核 · 另一名员工复核后夹具恢复可用</h3>
+    <div id="repair-list" class="card-list"></div>
+  </section>
+
+  <!-- ============================== 保养计划 ============================== -->
+  <section id="view-maint" class="view hidden">
+    <div class="toolbar">
+      <h2>保养计划与提醒</h2>
+      <div>
+        <button class="btn" id="maint-scan">立即扫描到期</button>
+        <button class="btn" id="maint-refresh">刷新</button>
+      </div>
+    </div>
+    <div class="panel dim-panel">
+      进程内任务每 30 秒自动扫描：按夹具保养周期生成计划，归还逾期自动生成处置单。
+    </div>
+    <div id="maint-list" class="card-list"></div>
+  </section>
+
+  <!-- ============================== 报废审批 ============================== -->
+  <section id="view-scrap" class="view hidden">
+    <div class="toolbar">
+      <h2>报废审批</h2>
+      <button class="btn" id="scrap-refresh">刷新</button>
+    </div>
+    <h3 class="section-title">超寿命报废</h3>
+    <div id="scrap-list" class="card-list"></div>
+    <h3 class="section-title">跨线调拨审批</h3>
+    <div id="transfer-list" class="card-list"></div>
+    <h3 class="section-title">全部处置单（变形 / 定位销缺失 / 逾期）</h3>
+    <div id="disp-list" class="card-list"></div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  夹具编号 FZ-· 工位 ST-· 机型 M-· 申请 BR-· 点检 IC-· 维修 RP-· 处置 DP-·
+  &nbsp;|&nbsp; SQLite 持久化 · 照片本地落盘 · WAL 行锁保证领用竞争唯一成功
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
